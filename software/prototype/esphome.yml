@@ -82,19 +82,19 @@ display:
       - id: page3
         lambda: |-
           it.print(0, 0, id(font_larger), "PM");
-          it.graph(0, 21, id(co2_graph));
+          it.graph(0, 21, id(pm_graph));
       - id: page4
         lambda: |-
           it.print(0, 0, id(font_larger), "Temperature");
-          it.graph(0, 21, id(co2_graph));          
+          it.graph(0, 21, id(temperature_graph));          
       - id: page5
         lambda: |-
           it.print(0, 0, id(font_larger), "Humidity");
-          it.graph(0, 21, id(co2_graph));
+          it.graph(0, 21, id(humidity_graph));
       - id: page6
         lambda: |-
           it.print(0, 0, id(font_larger), "Pressure");
-          it.graph(0, 21, id(co2_graph));
+          it.graph(0, 21, id(pressure_graph));
 
 # For example cycle through pages on a timer
 interval:
