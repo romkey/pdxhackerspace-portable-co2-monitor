@@ -1,0 +1,191 @@
+esphome:
+  name: portable-co2-sensor
+  friendly_name: Portable CO2 Sensor
+
+esp32:
+  board: adafruit_qtpy_esp32s3_nopsram
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "oh-no-you-don't"
+
+ota:
+  password: "not this either"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Portable-Co2-Sensor"
+    password: "nor this"
+
+captive_portal:
+
+font:
+  - file: 'fonts/B612-Regular.ttf'
+    id: font1
+    size: 12
+  - file: 'fonts/B612-Regular.ttf'
+    id: font_larger
+    size: 20
+
+spi:
+  clk_pin: GPIO36
+  mosi_pin: GPIO35
+  miso_pin: GPIO37
+
+i2c:
+  sda: GPIO41
+  scl: GPIO40
+
+# this isn't working
+display:
+  - platform: waveshare_epaper
+    cs_pin: GPIO18
+    dc_pin: GPIO17
+#    busy_pin: D4
+#    reset_pin: D5
+    model: 2.90in
+    full_update_every: 30
+    lambda: |-
+      it.print(0, 0, id(font1), "Hello World!");
+
+# this is
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x64"
+    id: ssd_display
+#    reset_pin: D0
+    address: 0x3D
+    pages:
+      - id: page1
+        lambda: |-
+         it.print(0, 0, id(font1), "CO2");
+         it.printf(40, 0, id(font1), "%4.0f", id(co2).state);
+         it.print(0, 14, id(font1), "Temp");
+         it.printf(40, 14, id(font1), "%.1f", id(bme_temperature).state);
+         it.print(0, 28, id(font1), "Humd");
+         it.printf(40, 28, id(font1), "%.1f%%", id(bme_humidity).state);
+         it.print(0, 42, id(font1), "PM");
+         it.printf(40, 42, id(font1), "%f.0/%f.0/%f.0", id(pm_1_0).state, id(pm_2_5).state, id(pm_10_0).state);
+      - id: page2
+        lambda: |-
+          it.print(0, 0, id(font_larger), "CO2");
+          it.graph(0, 21, id(co2_graph));
+      - id: page3
+        lambda: |-
+          it.print(0, 0, id(font_larger), "PM");
+          it.graph(0, 21, id(co2_graph));
+      - id: page4
+        lambda: |-
+          it.print(0, 0, id(font_larger), "Temperature");
+          it.graph(0, 21, id(co2_graph));          
+      - id: page5
+        lambda: |-
+          it.print(0, 0, id(font_larger), "Humidity");
+          it.graph(0, 21, id(co2_graph));
+      - id: page6
+        lambda: |-
+          it.print(0, 0, id(font_larger), "Pressure");
+          it.graph(0, 21, id(co2_graph));
+
+# For example cycle through pages on a timer
+interval:
+  - interval: 5s
+    then:
+      - display.page.show_next: ssd_display
+      - component.update: ssd_display
+
+graph:
+  - id: co2_graph
+    sensor: co2
+    duration: 1h
+    width: 128
+    height: 43
+  - id: temperature_graph
+    sensor: bme_temperature
+    duration: 1h
+    width: 128
+    height: 43
+  - id: humidity_graph
+    sensor: bme_humidity
+    duration: 1h
+    width: 128
+    height: 43
+  - id: pressure_graph
+    sensor: bme_pressure
+    duration: 1h
+    width: 128
+    height: 43
+  - id: pm_graph
+    duration: 1h
+    width: 128
+    height: 43
+    traces:
+      - sensor: pm_1_0
+        line_type: DASHED
+        line_thickness: 1
+      - sensor: pm_2_5
+        line_type: SOLID
+        line_thickness: 1
+      - sensor: pm_10_0
+        line_type: DOTTED
+        line_thickness: 1
+
+sensor:
+  - platform: pmsa003i
+    pm_1_0:
+      name: "PM1.0"
+      id: pm_1_0
+    pm_2_5:
+      name: "PM2.5"
+      id: pm_2_5
+    pm_10_0:
+      name: "PM10.0"
+      id: pm_10_0
+    pmc_0_3:
+      name: "PMC >0.3µm"
+    pmc_0_5:
+      name: "PMC >0.5µm"
+    pmc_1_0:
+      name: "PMC >1µm"
+    pmc_2_5:
+      name: "PMC >2.5µm"
+    pmc_5_0:
+      name: "PMC >5µm"
+    pmc_10_0:
+      name: "PMC >10µm"
+
+  - platform: scd4x
+    id: co2_sensor
+    co2:
+      name: "CO2"
+      id: co2
+    temperature:
+      name: "SCD Temperature"
+    humidity:
+      name: "SCD Humidity"
+
+  - platform: bme680
+    id: temp_sensor
+    temperature:
+      name: "BME680 Temperature"
+      oversampling: 16x
+      id: bme_temperature
+    pressure:
+      name: "BME680 Pressure"
+      id: bme_pressure
+    humidity:
+      name: "BME680 Humidity"
+      id: bme_humidity
+    gas_resistance:
+      name: "BME680 Gas Resistance"
+    address: 0x77
+    update_interval: 60s
