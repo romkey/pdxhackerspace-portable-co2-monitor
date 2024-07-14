@@ -1,0 +1,428 @@
+esphome:
+  name: multimultigas
+  friendly_name: MultiMultiGas
+#  includes:
+#    - multi_multigas.h
+  libraries:
+    - Wire
+    - https://github.com/DFRobot/DFRobot_MultiGasSensor
+    - https://github.com/romkey/multi-multigas
+
+esp32:
+  board: adafruit_qtpy_esp32s3_nopsram
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: 
+
+ota:
+  password: 
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip: 
+    static_ip: 10.0.1.125
+    subnet: 255.255.255.0
+    dns1: 10.0.1.1
+    gateway: 10.0.1.1
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Multimultigas Fallback Hotspot"
+    password: 
+
+captive_portal:
+
+external_components:
+  - source:
+      type: local
+      path: "/config/my_components"
+    components: [ "multi_gas" ]
+
+
+#globals:
+#  - id: gas_sensor
+#    type: MultiMultiGas
+
+i2c:
+  sda: 41
+  scl: 40
+  frequency: 100khz
+  scan: true
+
+debug:
+  update_interval: 5s
+
+font:
+  - file: 'fonts/B612-Regular.ttf'
+    id: font_20pt
+    size: 20
+
+graph:
+  - id: co2_graph
+    height: 64
+    width: 128
+    duration: 15min
+    traces:
+      - sensor: co2
+        continuous: true
+  - id: temp_graph
+    height: 64
+    width: 128
+    sensor: bme680_temp
+    duration: 15min
+
+  - id: humidity_graph
+    sensor: bme680_hum
+    height: 64
+    width: 128
+    duration: 15min
+
+  - id: hcho_graph
+    sensor: formaldehyde
+    height: 64
+    width: 128
+    duration: 15min
+
+  - id: no2_graph
+    sensor: no2
+    height: 64
+    width: 128
+    duration: 15min
+
+  - id: nh3_graph
+    sensor: nh3
+    height: 64
+    width: 128
+    duration: 15min
+
+  - id: o3_graph
+    sensor: o3
+    height: 64
+    width: 128
+    duration: 15min
+
+  - id: hcl_graph
+    sensor: hcl
+    height: 64
+    width: 128
+    duration: 15min
+
+  - id: h2s_graph
+    sensor: h2s
+    height: 64
+    width: 128
+    duration: 15min
+
+  - id: co_graph
+    sensor: co
+    height: 64
+    width: 128
+    duration: 15min
+
+  - id: pm_2_5_graph
+    sensor: pm_2_5
+    height: 64
+    width: 128
+    duration: 15min
+
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    timezone: America/Los_Angeles
+
+interval:
+  - interval: 5s
+    then:
+      - display.page.show_next: my_display
+      - component.update: my_display
+
+display:
+  - platform: ssd1327_i2c
+    model: "SSD1327 128x128"
+    id: my_display
+#    reset_pin: D0
+    address: 0x3D
+    auto_clear_enabled: True    
+    pages:
+      - id: page_time
+        lambda: |-
+          auto time = id(homeassistant_time).now();
+          if(time.is_valid()) {
+            it.printf(20, 50, id(font_20pt), "%02d:%02d:%02d", time.hour, time.minute, time.second);
+            }
+      - id: page_temperature
+        lambda: |-
+          if(isnan(id(bme680_temp).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "Temp %0.1f°C", id(bme680_temp).state);
+          it.graph(0, 60, id(temp_graph));
+
+
+      - id: page_humidity
+        lambda: |-
+          if(isnan(id(bme680_hum).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "Hum %0.0f%%", id(bme680_hum).state);
+          it.graph(0, 60, id(humidity_graph));
+
+
+      - id: page_co2
+        lambda: |-
+          if(isnan(id(co2).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "CO2 %0.0f ppm", id(co2).state);
+          it.graph(0, 60, id(co2_graph));
+
+
+      - id: page_co
+        lambda: |-
+          if(isnan(id(co).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "CO %0.0f ppm", id(co).state);
+          it.graph(0, 60, id(co_graph));
+
+
+      - id: page_h2s
+        lambda: |-
+          if(isnan(id(h2s).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "H2S %0.0f ppm", id(h2s).state);
+          it.graph(0, 60, id(h2s_graph));
+
+
+      - id: page_hcl
+        lambda: |-
+          if(isnan(id(hcl).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "HCL %0.0f ppm", id(hcl).state);
+          it.graph(0, 60, id(hcl_graph));
+
+
+      - id: page_o3
+        lambda: |-
+          if(isnan(id(o3).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "O3 %0.0f ppm", id(o3).state);
+          it.graph(0, 60, id(o3_graph));
+
+
+      - id: page_nh3
+        lambda: |-
+          if(isnan(id(nh3).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "NH3 %0.0f ppm", id(nh3).state);
+          it.graph(0, 60, id(nh3_graph));
+
+
+      - id: page_no2
+        lambda: |-
+          if(isnan(id(no2).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "NO2 %0.0f ppm", id(no2).state);
+          it.graph(0, 60, id(no2_graph));
+
+
+      - id: page_hcho
+        lambda: |-
+          if(isnan(id(formaldehyde).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "HCHO %0.0f ppb", id(formaldehyde).state);
+          it.graph(0, 60, id(hcho_graph));
+
+
+      - id: page_pm2_5
+        lambda: |-
+          if(isnan(id(pm_2_5).state)) {
+            id(my_display).show_next_page();
+            return;
+            }
+
+          it.printf(10, 10, id(font_20pt), "PM2.5 %0.0f", id(pm_2_5).state);
+          it.graph(0, 60, id(pm_2_5_graph));
+
+sensor:
+  - platform: bme680
+    address: 0x77
+    temperature:
+      name: "BME680 Temperature"
+      oversampling: 16x
+      id: "bme680_temp"
+    pressure:
+      name: "BME680 Pressure"
+    humidity:
+      name: "BME680 Humidity"
+      id: "bme680_hum"
+    gas_resistance:
+      name: "BME680 Gas Resistance"  
+  - platform: sfa30
+    formaldehyde:
+      id: formaldehyde
+      name: "Formaldehyde"
+    temperature:
+      name: "SFA30 Temperature"
+    humidity:
+      name: "SFA30 Humidity"
+  - platform: scd4x
+    co2:
+      id: co2
+      name: "CO2"
+    temperature:
+      name: "CO2 Temperature"
+    humidity:
+      name: "CO2 Humidity"
+  - platform: sgp4x
+    voc:
+      name: "VOC Index"
+    compensation:
+      humidity_source: bme680_hum
+      temperature_source: bme680_temp
+  - platform: ccs811
+    eco2:
+      name: "eCO2"
+    tvoc:
+      name: "TVOC"
+    address: 0x5A
+
+
+  - platform: multi_gas
+    id: gas
+    no2:
+      id: no2
+      name: "NO2"
+    o2:
+      id: o2
+      name: "O2"
+    o3:
+      id: o3
+      name: "O3"
+    co:
+      id: co
+      name: "CO"
+    h2s:
+      id: h2s
+      name: "H2S"
+    h2:
+      id: h2
+      name: "H2"
+    cl2:
+      id: cl2
+      name: "CL2"
+    hcl:
+      id: hcl
+      name: "HCL"
+    hf:
+      id: hf
+      name: "HF"
+    nh3:
+      id: nh3
+      name: "NH3"
+    ph3:
+      id: ph3
+      name: "PH3"
+    so2:
+      id: so2
+      name: "SO2"
+
+  - platform: pmsa003i
+    pm_1_0:
+      name: "PM1.0"
+    pm_2_5:
+      id: pm_2_5
+      name: "PM2.5"
+    pm_10_0:
+      id: pm_10_0
+      name: "PM10.0"
+    pmc_0_3:
+      name: "PMC >0.3µm"
+    pmc_0_5:
+      name: "PMC >0.5µm"
+    pmc_1_0:
+      name: "PMC >1µm"
+    pmc_2_5:
+      name: "PMC >2.5µm"
+    pmc_5_0:
+      name: "PMC >5µm"
+    pmc_10_0:
+      name: "PMC >10µm"
+
+  - platform: debug
+    free:
+      name: "Heap Free"
+    block:
+      name: "Heap Max Block"
+    loop_time:
+      name: "Loop Time"
+  - platform: uptime
+    name: Uptime Sensor
+  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
+    name: "WiFi Signal dB"
+    id: wifi_signal_db
+    update_interval: 60s
+    entity_category: "diagnostic"
+
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "Signal %"
+    entity_category: "diagnostic"
+    device_class: ""
+
+
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: IP
+    ssid:
+      name: SSID
+    bssid:
+      name: BSSID
+    mac_address:
+      name: MAC
+    dns_address:
+      name: DNS
+
+button:
+  - platform: restart
+    name: "Restart"
