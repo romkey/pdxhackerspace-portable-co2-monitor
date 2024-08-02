@@ -1,0 +1,14 @@
+adafruit_il0373
+adafruit_il0398
+adafruit_ssd1608
+adafruit_spd1656  
+adafruit_ssd1675
+adafruit_ssd1680  
+adafruit_ssd1681
+adafruit_uc8151d
+
+adafruit_display_text
+
+adafruit_bme680
+adafruit_scd4x
+adafruit_pm25

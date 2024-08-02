@@ -1,0 +1,59 @@
+esphome:
+  name: co2-test
+  friendly_name: CO2 test
+
+esp32:
+  variant: esp32s3
+  board: seeed_xiao_esp32s3
+#  board: adafruit_matrixportal_esp32s3
+  framework:
+    type: arduino
+    version: "latest"
+    platform_version: "6.4.0"
+    
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "AE1EDH8pwE2zlWv1RWtfs5ccxd1U3Nb204HnHlM8KvI="
+
+ota:
+  password: "a182440af834e599668e084b13145afc"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  manual_ip:
+    static_ip: 10.0.1.49
+    gateway: 10.0.1.1
+    subnet: 255.255.255.0    
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Co2-Test Fallback Hotspot"
+    password: "VcPy2OBD6mmn"
+
+captive_portal:
+
+debug:
+  update_interval: 10s
+
+# pinout chart at
+# https://www.seeedstudio.com/XIAO-ESP32S3-p-5627.html    
+i2c:
+  sda: GPIO5
+  scl: GPIO6
+  scan: True
+  frequency: 400kHz
+
+sensor:
+  - platform: scd4x
+    co2:
+      id: co2
+      name: "CO2"
+    temperature:
+      name: "CO2 Temperature"
+    humidity:
+      name: "CO2 Humidity"
