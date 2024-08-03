@@ -1,0 +1,48 @@
+      #define LCARS_TOP(section) \
+          it.image(0, row, id(lcars_blue_arc)); \
+          it.print(150, row, id(font_40pt), id(my_black), TextAlign::TOP_RIGHT, section); \
+          row += 40;
+
+      #define LCARS_ROW(label, state, lcars_segment, state_color) \
+          it.image(0, row, lcars_segment); \
+          it.print(99, row, id(font_20pt), id(my_white), TextAlign::TOP_RIGHT, label); \
+          if(!isnan(state))  \
+              it.printf(120, row, id(font_20pt), state_color,  "%1.0f", state); \
+          row += 40;
+
+      auto row = 80;
+      auto lcars_segment = id(lcars_green_bar);
+      auto state_color = id(my_white);
+
+      LCARS_TOP("Air Quality")
+
+      auto co2_lvl = id(co2).state;
+      if(isnan(co2_lvl)) {
+        lcars_segment = id(lcars_gray_bar);
+        state_color = id(my_white);
+      } else if(co2_lvl < 1000) {
+        lcars_segment = id(lcars_green_bar);
+       	state_color = id(my_white);
+      } else {
+        lcars_segment = id(lcars_red_bar);
+        state_color = id(my_white);
+      }
+
+      LCARS_ROW("CO2", co2_lvl, lcars_segment, state_color)
+
+
+      LCARS_TOP("Environment")
+
+      auto temp_lvl = id(bme680_temp).state
+      if(isnan(temp_lvl)) {
+        lcars_segment = id(lcars_gray_bar);
+        state_color = id(my_white);
+      } else if(temp_lvl < 30) {
+        lcars_segment = id(lcars_green_bar);
+       	state_color = id(my_white);
+      } else {
+        lcars_segment = id(lcars_red_bar);
+        state_color = id(my_white);
+      }
+
+      LCARS_ROW("Temperature", temp_lvl, lcars_segment, state_color)
